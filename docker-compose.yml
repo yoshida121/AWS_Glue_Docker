@@ -1,0 +1,53 @@
+version: '3.5'
+services:
+  glue.dev.summary:
+    container_name: glue.dev
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    volumes:
+      # jupyterlabのdefaultのWorkspaceにlocalファイルをマウントします。
+      - ./src:/home/glue_user/workspace/jupyter_workspace
+    environment:
+      # dummy configure
+      - AWS_DEFAULT_REGION=ap-northeast-1
+      - AWS_DEFAULT_OUTPUT=json
+      - AWS_ACCESS_KEY_ID=minio
+      - AWS_SECRET_ACCESS_KEY=minio123
+      - DISABLE_SSL="true"
+    ports:
+      # jupyterlabのポート
+      - 8888:8888
+      # spark uiのポート
+      - 4040:4040
+    networks:
+      - glue.dev.network
+    # command: /home/jupyter/jupyter_start.sh
+    command: /home/glue_user/jupyter/jupyter_start.sh
+  glue.dev.s3.local:
+    image: minio/minio:latest
+    container_name: glue.dev.s3.local
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    entrypoint: sh
+    environment:
+      - MINIO_ROOT_USER=minio
+      - MINIO_ROOT_PASSWORD=minio123
+    volumes:
+      - ./minio/data:/data
+      - ./minio/policies:/policies
+      - ./minio/export:/export
+      # - ./minio/config:/root/.minio
+    command: >
+      -c "
+      mkdir -p /data/.minio.sys/buckets;
+      cp -r /policies/* /data/.minio.sys/;
+      cp -r /export/* /data/;
+      /opt/bin/minio server --console-address ":9001" --address ":9000" /data;
+      "
+    networks:
+      - glue.dev.network
+networks:
+  glue.dev.network:
+    name: glue.dev.network
