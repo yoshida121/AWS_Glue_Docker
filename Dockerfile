@@ -1,4 +1,4 @@
-FROM amazon/aws-glue-libs:glue_libs_3.0.0_image_01
+FROM amazon/aws-glue-libs:glue_libs_2.0.0_image_01
 
 COPY ./requirements.txt /work/requirements.txt
 RUN python3 -m pip install --no-cache-dir -r /work/requirements.txt
